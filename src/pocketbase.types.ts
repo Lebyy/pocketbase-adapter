@@ -1,3 +1,4 @@
+// ty tajkirkpatrick's pocketbase adapter implementation.
 import type { Record as PBRecord } from "pocketbase";
 
 export type PocketBaseUser = PBRecord & {
@@ -40,12 +41,12 @@ export type PocketBaseVerificationToken = PBRecord & {
 };
 
 export type Schema = {
-  name: string
-  type: string
-  required: boolean
+  name: string;
+  type: string;
+  required: boolean;
   options?: {
-    maxSelect?: number
-    collectionId?: string
-    cascadeDelete?: boolean
-  }
-}
+    maxSelect?: number;
+    collectionId?: string;
+    cascadeDelete?: boolean;
+  };
+};

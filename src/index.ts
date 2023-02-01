@@ -13,6 +13,7 @@ import type {
   Schema,
 } from "./pocketbase.types"
 import type PocketBase from "pocketbase"
+import { format } from "./pocketbase.utils";
 
 import {
   UserSchema,
@@ -196,32 +197,23 @@ export function PocketBaseAdapter(
 
   return {
     async createUser(user) {
-      const pb_user = await (
-        await db
-      ).U.create<PocketBaseUser>({
-        name: user.name,
-        image: user.image,
-        email: user.email,
-        emailVerified: user.emailVerified?.toISOString().replace("T", " "),
-      }).catch(() => {
-        throw new Error(
-          "[PocketBase Next-Auth Adapter] Error creating user - see pocketbase logs"
-        )
-      })
+      const pb_user = await(await db)
+        .U.create<PocketBaseUser>({
+          ...user,
+          emailVerified: user.emailVerified?.toISOString().replace("T", " "),
+        })
+        .catch(() => {
+          throw new Error(
+            "[PocketBase Next-Auth Adapter] Error creating user - see pocketbase logs"
+          );
+        });
 
       if (pb_user.code)
         throw new Error(
           "[PocketBase Next-Auth Adapter] Error creating user in database - see pocketbase logs"
         )
 
-      const returnVal: AdapterUser = {
-        id: pb_user.id,
-        name: pb_user.name,
-        email: pb_user.email,
-        emailVerified: new Date(pb_user.emailVerified),
-      }
-
-      return returnVal
+      return format<AdapterUser>(pb_user);
     },
     async getUser(id) {
       const pb_user = await (
@@ -236,15 +228,7 @@ export function PocketBaseAdapter(
           "[PocketBase Next-Auth Adapter] Error getting user from database - see pocketbase logs"
         )
 
-      const returnVal: AdapterUser = {
-        id: pb_user.id as string,
-        email: pb_user.email,
-        emailVerified: new Date(pb_user.emailVerified),
-        name: pb_user.name,
-        image: pb_user.image,
-      }
-
-      return returnVal
+      return format<AdapterUser>(pb_user);
     },
     async getUserByEmail(email) {
       const pb_user = await (
@@ -259,15 +243,7 @@ export function PocketBaseAdapter(
           "[PocketBase Next-Auth Adapter] Error getting user from database using email filter - see pocketbase logs"
         )
 
-      const returnVal: AdapterUser = {
-        id: pb_user.id as string,
-        email: pb_user.email,
-        image: pb_user.image,
-        name: pb_user.name,
-        emailVerified: new Date(pb_user.emailVerified),
-      }
-
-      return returnVal
+      return format<AdapterUser>(pb_user);
     },
     async getUserByAccount({ providerAccountId, provider }) {
       const pb_account = await (
@@ -298,44 +274,26 @@ export function PocketBaseAdapter(
           "[PocketBase Next-Auth Adapter] Error getting user from database within account filter function - see pocketbase logs"
         )
 
-      const returnVal: AdapterUser = {
-        id: pb_user.id,
-        email: pb_user.email,
-        image: pb_user.image,
-        name: pb_user.name,
-        emailVerified: new Date(pb_user.emailVerified),
-      }
-
-      return returnVal
+      return format<AdapterUser>(pb_user);
     },
     async updateUser(user) {
-      const pb_user = await (
-        await db
-      ).U.update<PocketBaseUser>(user.id as string, {
-        name: user.name,
-        image: user.image,
-        email: user.email,
-        email_verified: user.emailVerified?.toISOString().replace("T", " "),
-      }).catch(() => {
-        throw new Error(
-          "[PocketBase Next-Auth Adapter] Error updating user - see pocketbase logs"
-        )
-      })
+      const pb_user = await(await db)
+        .U.update<PocketBaseUser>(user.id as string, {
+          ...user,
+          email_verified: user.emailVerified?.toISOString().replace("T", " "),
+        })
+        .catch(() => {
+          throw new Error(
+            "[PocketBase Next-Auth Adapter] Error updating user - see pocketbase logs"
+          );
+        });
 
       if (pb_user.code)
         throw new Error(
           "[PocketBase Next-Auth Adapter] Error updating user in database - see pocketbase logs"
         )
 
-      const returnVal: AdapterUser = {
-        id: pb_user.id,
-        email: pb_user.email,
-        image: pb_user.image,
-        name: pb_user.name,
-        emailVerified: new Date(pb_user.emailVerified),
-      }
-
-      return returnVal
+      return format<AdapterUser>(pb_user);
     },
     async deleteUser(userId) {
       await (
@@ -347,47 +305,22 @@ export function PocketBaseAdapter(
       return
     },
     async linkAccount(account) {
-      const pb_account = await (
-        await db
-      ).A.create<PocketBaseAccount>({
-        userId: account.userId,
-        type: account.type,
-        provider: account.provider,
-        providerAccountId: account.providerAccountId,
-        access_token: account.access_token,
-        id_token: account.id_token,
-        token_type: account.token_type,
-        refresh_token: account.refresh_token,
-        scope: account.scope,
-        session_state: account.session_state,
-        expires_at: Number(account.expires_at),
-      }).catch(() => {
-        throw new Error(
-          "[PocketBase Next-Auth Adapter] Error creating account in database - see pocketbase logs"
-        )
-      })
+      const pb_account = await(await db)
+        .A.create<PocketBaseAccount>({
+          ...account,
+        })
+        .catch(() => {
+          throw new Error(
+            "[PocketBase Next-Auth Adapter] Error creating account in database - see pocketbase logs"
+          );
+        });
 
       if (pb_account.code)
         throw new Error(
           "[PocketBase Next-Auth Adapter] Error linking account in database - see pocketbase logs"
         )
 
-      const returnVal: AdapterAccount = {
-        id: pb_account.id,
-        userId: pb_account.userId,
-        provider: pb_account.provider,
-        providerAccountId: pb_account.providerAccountId,
-        access_token: pb_account.access_token,
-        id_token: pb_account.id_token,
-        refresh_token: pb_account.refresh_token,
-        scope: pb_account.scope,
-        session_state: pb_account.session_state,
-        token_type: pb_account.token_type,
-        expires_at: Number(pb_account.expires_at),
-        type: pb_account.type as "oauth" | "email" | "credentials",
-      }
-
-      return returnVal
+      return format<AdapterAccount>(pb_account);
     },
     async unlinkAccount({ providerAccountId, provider }) {
       const pb_account = await (
@@ -410,28 +343,23 @@ export function PocketBaseAdapter(
       return
     },
     async createSession(session) {
-      const pb_session = await (
-        await db
-      ).S.create<PocketBaseSession>({
-        expires: session.expires.toISOString().replace("T", " "),
-        sessionToken: session.sessionToken,
-        userId: session.userId,
-      }).catch(() => {
-        throw new Error(
-          "[PocketBase Next-Auth Adapter] Error creating session in database - see pocketbase logs"
-        )
-      })
+      const pb_session = await(await db)
+        .S.create<PocketBaseSession>({
+          ...session,
+          expires: session.expires.toISOString().replace("T", " "),
+        })
+        .catch(() => {
+          throw new Error(
+            "[PocketBase Next-Auth Adapter] Error creating session in database - see pocketbase logs"
+          );
+        });
 
       if (pb_session.code)
         throw new Error(
           "[PocketBase Next-Auth Adapter] Error creating session in database - see pocketbase logs"
         )
 
-      return {
-        sessionToken: pb_session.sessionToken,
-        userId: pb_session.userId,
-        expires: new Date(pb_session.expires),
-      }
+      return format<AdapterSession>(pb_session);
     },
     async getSessionAndUser(sessionToken) {
       const pb_session = await (
@@ -460,26 +388,12 @@ export function PocketBaseAdapter(
           "[PocketBase Next-Auth Adapter] Error retrieving user from database - see pocketbase logs"
         )
 
-      const session: AdapterSession = {
-        expires: new Date(pb_session.expires),
-        userId: pb_user.id,
-        sessionToken: pb_session.sessionToken,
-        // @ts-expect-error
-        id: pb_session.id as string,
-      }
-
-      const user: AdapterUser = {
-        id: pb_user.id,
-        email: pb_user.email,
-        image: pb_user.image,
-        name: pb_user.name,
-        emailVerified: new Date(pb_user.emailVerified),
-      }
-
+      const session = format<AdapterSession>(pb_session);
+      const user = format<AdapterUser>(pb_user);
       return {
         session,
         user,
-      }
+      };
     },
     async updateSession(session) {
       const record = await (
@@ -509,13 +423,7 @@ export function PocketBaseAdapter(
           "[PocketBase Next-Auth Adapter] Error updating session in database - see pocketbase logs"
         )
 
-      const returnVal: AdapterSession = {
-        sessionToken: pb_session.sessionToken,
-        userId: pb_session.userId,
-        expires: new Date(pb_session.expires),
-      }
-
-      return returnVal
+      return format<AdapterSession>(pb_session);
     },
     async deleteSession(sessionToken) {
       const record = await (
@@ -533,30 +441,23 @@ export function PocketBaseAdapter(
       return
     },
     async createVerificationToken(verificationToken) {
-      const pb_veriToken = await (
-        await db
-      ).V.create<PocketBaseVerificationToken>({
-        identifier: verificationToken.identifier,
-        token: verificationToken.token,
-        expires: verificationToken.expires.toISOString().replace("T", " "),
-      }).catch(() => {
-        throw new Error(
-          "[PocketBase Next-Auth Adapter] Error creating verification token in database - see pocketbase logs"
-        )
-      })
+      const pb_veriToken = await(await db)
+        .V.create<PocketBaseVerificationToken>({
+          ...verificationToken,
+          expires: verificationToken.expires.toISOString().replace("T", " "),
+        })
+        .catch(() => {
+          throw new Error(
+            "[PocketBase Next-Auth Adapter] Error creating verification token in database - see pocketbase logs"
+          );
+        });
 
       if (pb_veriToken.code)
         throw new Error(
           "[PocketBase Next-Auth Adapter] Error creating verification token in database - see pocketbase logs"
         )
 
-      const returnVal: VerificationToken = {
-        token: pb_veriToken.token,
-        identifier: pb_veriToken.identifier,
-        expires: new Date(pb_veriToken.expires),
-      }
-
-      return returnVal
+      return format<VerificationToken>(pb_veriToken);
     },
     async useVerificationToken({ identifier, token }) {
       const pb_veriToken = await (
@@ -581,13 +482,9 @@ export function PocketBaseAdapter(
       })
 
       if (success) {
-        const returnVal: VerificationToken = {
-          token: pb_veriToken.token,
-          identifier: pb_veriToken.identifier,
-          expires: new Date(pb_veriToken.expires),
-        }
-
-        return returnVal
+        // @ts-expect-error internal id's are not to be returned with the rest of the token
+        const { id, ...returnVal } = format<VerificationToken>(pb_veriToken);
+        return returnVal;
       } else {
         throw new Error(
           "[PocketBase Next-Auth Adapter] Error unable to delete verificationToken from database - see pocketbase logs"
